@@ -205,7 +205,11 @@ while (visited.size < maxPages) {
       } else if (['http:','https:'].includes(u.protocol)) {
         u.hash = '';
         const routeScore = scoreRoute(u, label);
-        if (routeScore && !/privacy|legal|terms|cookie|login|sign[- ]?in/i.test(label + ' ' + u.pathname)) {
+        const routeHost = u.hostname.replace(/^www\./i,'');
+        const isCompanyRoute = routeHost === domain || routeHost.endsWith('.' + domain);
+        const excludedRouteHost = /^(docs|support)\./i.test(routeHost);
+        const weakApplyOnly = /apply now/i.test(label) && !/(contact|sales|demo|partner|support|press|media|career|job|enquir|inquir)/i.test(label + ' ' + u.pathname);
+        if (routeScore && isCompanyRoute && !excludedRouteHost && !weakApplyOnly && !/privacy|legal|terms|cookie|login|sign[- ]?in/i.test(label + ' ' + u.pathname)) {
           const key = u.href;
           const candidate = {
             value: u.href,
