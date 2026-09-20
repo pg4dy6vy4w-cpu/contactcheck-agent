@@ -1,15 +1,41 @@
 {
   "actorSpecification": 1,
   "fields": {
-    "domain": { "type": "string" },
-    "intent": { "type": "string" },
-    "contactable": { "type": "boolean" },
-    "bestContact": { "type": ["object", "null"] },
-    "emails": { "type": "array" },
-    "phones": { "type": "array" },
-    "contactForms": { "type": "array" },
-    "socialProfiles": { "type": "array" },
-    "pagesChecked": { "type": "array" },
-    "checkedAt": { "type": "string" }
+    "domain": {
+      "type": "string"
+    },
+    "intent": {
+      "type": "string"
+    },
+    "contactable": {
+      "type": "boolean"
+    },
+    "bestContact": {
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "emails": {
+      "type": "array"
+    },
+    "phones": {
+      "type": "array"
+    },
+    "contactRoutes": {
+      "type": "array"
+    },
+    "contactForms": {
+      "type": "array"
+    },
+    "socialProfiles": {
+      "type": "array"
+    },
+    "pagesChecked": {
+      "type": "array"
+    },
+    "checkedAt": {
+      "type": "string"
+    }
   }
 }
