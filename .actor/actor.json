@@ -1,0 +1,10 @@
+{
+  "actorSpecification": 1,
+  "name": "contactcheck",
+  "title": "ContactCheck",
+  "description": "Find and rank the best public business contact route for a company website based on your intent.",
+  "version": "0.1",
+  "build": { "dockerfile": "../Dockerfile" },
+  "input": "./input_schema.json",
+  "storages": { "dataset": { "schema": "./dataset_schema.json" } }
+}
