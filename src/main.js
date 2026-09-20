@@ -179,13 +179,38 @@ while (visited.size < maxPages) {
   });
 
   $('form').each((_, el) => {
-    const action = ($(el).attr('action') || page.finalUrl.href).trim();
+    const formText = $(el).text().replace(/\s+/g,' ').trim();
+    const fields = $(el).find('input, textarea, select');
+    const hasUserField = fields.toArray().some(field => {
+      const node = $(field);
+      const hay = [
+        node.attr('name') || '',
+        node.attr('id') || '',
+        node.attr('placeholder') || '',
+        node.attr('type') || ''
+      ].join(' ').toLowerCase();
+      return /(email|name|message|phone|company|subject|enquir|inquir)/.test(hay);
+    });
+    const formHay = formText.toLowerCase();
+    const hasContactLanguage = /(contact|sales|demo|message|enquir|inquir|support|partner|press|media|career|job|talk to|speak to)/.test(formHay);
+    if (!hasUserField && !hasContactLanguage) return;
+
+    const action = ($(el).attr('action') || '').trim();
+    let submissionUrl = page.finalUrl;
     try {
-      const u = new URL(action, page.finalUrl);
-      if (!sameHost(u)) return;
-      const formText = $(el).text().replace(/\s+/g,' ').trim();
+      if (action && action !== '#' && !/^javascript:/i.test(action)) {
+        const candidate = new URL(action, page.finalUrl);
+        if (sameHost(candidate)) submissionUrl = candidate;
+      }
       const s = scoreForm(page.finalUrl, formText);
-      addUnique(forms, u.href, { value: u.href, type: 'form', confidence: s.score / 100, sourceUrl: page.finalUrl.href, reasons: s.reasons });
+      addUnique(forms, page.finalUrl.href, {
+        value: page.finalUrl.href,
+        type: 'form',
+        confidence: s.score / 100,
+        sourceUrl: page.finalUrl.href,
+        submissionUrl: submissionUrl.href,
+        reasons: s.reasons
+      });
     } catch {}
   });
 }
