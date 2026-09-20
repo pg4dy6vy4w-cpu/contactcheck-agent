@@ -1,0 +1,9 @@
+{
+  "name": "contactcheck-agent",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Apify Actor that finds and ranks the best public business contact route for a domain and intent.",
+  "scripts": { "start": "node src/main.js" },
+  "dependencies": { "apify": "^3.4.0", "cheerio": "^1.0.0" },
+  "engines": { "node": ">=20" }
+}
