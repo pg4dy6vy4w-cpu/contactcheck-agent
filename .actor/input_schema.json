@@ -1,0 +1,32 @@
+{
+  "title": "ContactCheck input",
+  "description": "Give ContactCheck a company website and tell it why you want to contact the business.",
+  "type": "object",
+  "schemaVersion": 1,
+  "properties": {
+    "domain": {
+      "title": "Company domain or website",
+      "type": "string",
+      "description": "Example: example.com or https://example.com",
+      "editor": "textfield"
+    },
+    "intent": {
+      "title": "Contact intent",
+      "type": "string",
+      "description": "Used to rank the most appropriate public contact route.",
+      "editor": "select",
+      "default": "sales",
+      "enum": ["sales", "partnership", "support", "press", "careers", "general"],
+      "enumTitles": ["Sales", "Partnership", "Support", "Press / media", "Careers", "General"]
+    },
+    "maxPages": {
+      "title": "Maximum pages to inspect",
+      "type": "integer",
+      "description": "ContactCheck prioritizes likely contact, about, team and intent-specific pages.",
+      "default": 8,
+      "minimum": 1,
+      "maximum": 20
+    }
+  },
+  "required": ["domain"]
+}
