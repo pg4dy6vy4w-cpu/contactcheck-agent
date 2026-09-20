@@ -88,10 +88,34 @@ function scorePhone(sourceUrl, context='') {
   let score = 48 + Math.min(pageRelevance(sourceUrl, context), 18);
   return { score: Math.min(score, 85), reasons: ['publicly listed business phone'] };
 }
+function scoreRoute(url, label='', context='') {
+  const hay = (label + ' ' + url.pathname + ' ' + context).toLowerCase();
+  const words = INTENT_WORDS[intent] || [];
+  const matched = words.filter(w => hay.includes(w));
+  if (!matched.length) return null;
+
+  let score = 68;
+  const reasons = ['official public contact route'];
+  const labelLower = label.toLowerCase();
+  if (words.some(w => labelLower.includes(w))) {
+    score += 18;
+    reasons.push('link or button explicitly matches requested intent');
+  }
+  if (/contact|talk|speak|request|book|demo|quote|enquir|inquir|get started|start now/.test(labelLower)) {
+    score += 8;
+    reasons.push('clear contact call to action');
+  }
+  if (/contact|sales|demo|partner|support|help|press|media|career|job|quote|enquir|inquir/.test(url.pathname.toLowerCase())) {
+    score += 5;
+    reasons.push('destination appears contact-related');
+  }
+  return { score: Math.min(score, 98), reasons };
+}
 
 const emails = new Map();
 const phones = new Map();
 const forms = new Map();
+const routes = new Map();
 const socials = new Map();
 const pagesChecked = [];
 const discovered = new Map();
@@ -170,10 +194,26 @@ while (visited.size < maxPages) {
       const u = new URL(href, page.finalUrl);
       if (/linkedin\.com|facebook\.com|instagram\.com|x\.com|twitter\.com/i.test(u.hostname)) {
         addUnique(socials, u.href, { url: u.href, sourceUrl: page.finalUrl.href });
-      } else if (sameHost(u) && ['http:','https:'].includes(u.protocol)) {
+      } else if (['http:','https:'].includes(u.protocol)) {
         u.hash = '';
-        const rel = pageRelevance(u, label);
-        if (rel > 0 && !discovered.has(u.href)) discovered.set(u.href, rel);
+        const routeScore = scoreRoute(u, label);
+        if (routeScore && !/privacy|legal|terms|cookie|login|sign[- ]?in/i.test(label + ' ' + u.pathname)) {
+          const key = u.href;
+          const candidate = {
+            value: u.href,
+            type: intent === 'sales' ? 'sales_route' : 'contact_route',
+            confidence: routeScore.score / 100,
+            sourceUrl: page.finalUrl.href,
+            label: label || null,
+            reasons: routeScore.reasons
+          };
+          const prev = routes.get(key);
+          if (!prev || candidate.confidence > prev.confidence) routes.set(key, candidate);
+        }
+        if (sameHost(u)) {
+          const rel = pageRelevance(u, label);
+          if (rel > 0 && !discovered.has(u.href)) discovered.set(u.href, rel);
+        }
       }
     } catch {}
   });
@@ -215,7 +255,7 @@ while (visited.size < maxPages) {
   });
 }
 
-const candidates = [...emails.values(), ...phones.values(), ...forms.values()]
+const candidates = [...routes.values(), ...emails.values(), ...phones.values(), ...forms.values()]
   .sort((a,b) => b.confidence - a.confidence);
 const bestContact = candidates[0] || null;
 
@@ -226,6 +266,7 @@ const result = {
   bestContact,
   emails: [...emails.values()].sort((a,b) => b.confidence-a.confidence),
   phones: [...phones.values()].sort((a,b) => b.confidence-a.confidence),
+  contactRoutes: [...routes.values()].sort((a,b) => b.confidence-a.confidence),
   contactForms: [...forms.values()].sort((a,b) => b.confidence-a.confidence),
   socialProfiles: [...socials.values()],
   pagesChecked,
