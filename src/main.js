@@ -89,26 +89,34 @@ function scorePhone(sourceUrl, context='') {
   return { score: Math.min(score, 85), reasons: ['publicly listed business phone'] };
 }
 function scoreRoute(url, label='', context='') {
-  const hay = (label + ' ' + url.pathname + ' ' + context).toLowerCase();
-  const words = INTENT_WORDS[intent] || [];
-  const matched = words.filter(w => hay.includes(w));
-  if (!matched.length) return null;
-
-  let score = 68;
-  const reasons = ['official public contact route'];
   const labelLower = label.toLowerCase();
-  if (words.some(w => labelLower.includes(w))) {
-    score += 18;
+  const pathLower = url.pathname.toLowerCase();
+  const intentWords = INTENT_WORDS[intent] || [];
+
+  const contactAction = /(contact|talk to|talk with|speak to|request (a )?(demo|quote)|book (a )?(demo|call)|schedule (a )?(demo|call)|get in touch|enquir|inquir|apply now)/;
+  const pathAction = /(contact|demo|request|quote|enquir|inquir)/;
+  const explicitIntent = intentWords.some(w => labelLower.includes(w) || pathLower.includes(w));
+
+  // A contact route must actually provide a route to initiate contact.
+  // Generic product, pricing, customer, documentation, locale and informational links are not contact routes.
+  if (!contactAction.test(labelLower) && !pathAction.test(pathLower)) return null;
+  if (!explicitIntent && intent !== 'general') return null;
+
+  let score = 72;
+  const reasons = ['official public contact route'];
+  if (intentWords.some(w => labelLower.includes(w))) {
+    score += 14;
     reasons.push('link or button explicitly matches requested intent');
   }
-  if (/contact|talk|speak|request|book|demo|quote|enquir|inquir|get started|start now/.test(labelLower)) {
+  if (contactAction.test(labelLower)) {
     score += 8;
     reasons.push('clear contact call to action');
   }
-  if (/contact|sales|demo|partner|support|help|press|media|career|job|quote|enquir|inquir/.test(url.pathname.toLowerCase())) {
-    score += 5;
+  if (pathAction.test(pathLower)) {
+    score += 4;
     reasons.push('destination appears contact-related');
   }
+
   return { score: Math.min(score, 98), reasons };
 }
 
@@ -266,7 +274,10 @@ const result = {
   bestContact,
   emails: [...emails.values()].sort((a,b) => b.confidence-a.confidence),
   phones: [...phones.values()].sort((a,b) => b.confidence-a.confidence),
-  contactRoutes: [...routes.values()].sort((a,b) => b.confidence-a.confidence),
+  contactRoutes: [...routes.values()]
+    .filter(r => r.confidence >= 0.75)
+    .sort((a,b) => b.confidence-a.confidence)
+    .slice(0, 10),
   contactForms: [...forms.values()].sort((a,b) => b.confidence-a.confidence),
   socialProfiles: [...socials.values()],
   pagesChecked,
